@@ -1,7 +1,7 @@
 # Todo for OpenShift readyness
 
 * Data directory problem: `Daten-Verzeichnis (/var/www/html/data) ist ungültig. Bitte stelle sicher, dass das Datenverzeichnis auf seiner ersten Ebene eine Datei namens „.ocdata“ enthält.`
-* `php occ` doesn't work when in use with ConfigMap: `Console has to be executed with the user that owns the file config/config.php`
+* `php occ` doesn't work when in use with ConfigMap: `Console has to be executed with the user that owns the file config/config.php`. Idea: mount config.php to /etc/... and copy it in the entrypoint script to to correct place
 * Cleanup Dockerfiles and bring it upstream (file permissions)
 * PHP FPM timeout configuration
 * PHP opcache?
@@ -12,7 +12,7 @@
 * Convert config.php to ConfigMap -> Define persistent storage volumes
 * DB Params as environment vars
 * Some environment vars like password from secrets
-* App handling (separate folder for apps installed in webinterface)
+* App handling (separate folder for apps installed in webinterface). Idea: Install apps during build using build env vars.
 * Cron job
 * liveness/readiness probes
 * Redis and Database configuration via environment variables
