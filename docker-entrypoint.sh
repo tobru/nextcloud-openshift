@@ -31,7 +31,6 @@ if version_greater "$image_version" "$installed_version"; then
     fi
 
     rsync -a --delete --exclude /config/ --exclude /data/ --exclude /custom_apps/ --exclude /themes/ /usr/src/nextcloud/ /var/www/html/
-    chown -R $(id -u) /var/www/html/
 
     if [ ! -d /var/www/html/config ]; then
         cp -arT /usr/src/nextcloud/config /var/www/html/config
@@ -58,6 +57,8 @@ if version_greater "$image_version" "$installed_version"; then
         diff <(sed -n "/Enabled:/,/Disabled:/p" /tmp/list_before) <(sed -n "/Enabled:/,/Disabled:/p" /tmp/list_after) | grep '<' | cut -d- -f2 | cut -d: -f1
         rm -f /tmp/list_before /tmp/list_after
     fi
+
+    chown -R $(id -u) /var/www/html/
 fi
 
 exec "$@"
