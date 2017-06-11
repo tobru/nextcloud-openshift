@@ -31,6 +31,7 @@ if version_greater "$image_version" "$installed_version"; then
     fi
 
     rsync -a --delete --exclude /config/ --exclude /data/ --exclude /custom_apps/ --exclude /themes/ /usr/src/nextcloud/ /var/www/html/
+    chown -R $(id -u) /var/www/html/
 
     if [ ! -d /var/www/html/config ]; then
         cp -arT /usr/src/nextcloud/config /var/www/html/config
