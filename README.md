@@ -17,6 +17,7 @@
 * liveness/readiness probes
 * Redis and Database configuration via environment variables
 * Usage Documentation
+* Make use  of NEXTCLOUD_CONFIG_DIR
 
 ## Log output to look into
 

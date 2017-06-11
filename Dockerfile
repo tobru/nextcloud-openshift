@@ -1,4 +1,4 @@
-FROM nextcloud:11-fpm
+FROM nextcloud:12-fpm
 
 RUN chgrp -R 0 /var/www/html && \
     chmod -R g+rwX /var/www/html
