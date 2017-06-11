@@ -30,7 +30,7 @@ if version_greater "$image_version" "$installed_version"; then
         run_with_su 'php /var/www/html/occ app:list' > /tmp/list_before
     fi
 
-    cp /usr/src/nextcloud/version.php /var/www/html/version.php
+    rsync -a --delete --exclude /config/ --exclude /data/ --exclude /custom_apps/ --exclude /themes/ /usr/src/nextcloud/ /var/www/html/
 
     if [ ! -d /var/www/html/config ]; then
         cp -arT /usr/src/nextcloud/config /var/www/html/config
