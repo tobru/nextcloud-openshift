@@ -1,0 +1,54 @@
+apiVersion: batch/v2alpha1
+kind: CronJob
+metadata:
+  name: nextcloud-cron
+spec:
+  concurrencyPolicy: Replace
+  jobTemplate:
+    metadata:
+      creationTimestamp: null
+    spec:
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          creationTimestamp: null
+        spec:
+          containers:
+          - args:
+            - php
+            - -f
+            - /var/www/html/cron.php
+            image: 172.30.1.1:5000/nextcloud/nextcloud:latest
+            imagePullPolicy: Always
+            name: nextcloud-cron
+            resources: {}
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            volumeMounts:
+              - name: nextcloud-volume-1
+                mountPath: /var/www/html
+              - name: nextcloud-data
+                mountPath: /var/www/html/data
+              - name: nextcloud-config
+                mountPath: /var/www/html/config
+              - name: nextcloud-apps
+                mountPath: /var/www/html/custom_apps
+          dnsPolicy: ClusterFirst
+          restartPolicy: Never
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+          volumes:
+            - name: nextcloud-volume-1
+              emptyDir: {}
+            - name: nextcloud-data
+              persistentVolumeClaim:
+                claimName: nextcloud-data
+            - name: nextcloud-config
+              persistentVolumeClaim:
+                claimName: nextcloud-config
+            - name: nextcloud-apps
+              persistentVolumeClaim:
+                claimName: nextcloud-apps
+  schedule: */15 * * * *
+  suspend: false

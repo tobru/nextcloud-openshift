@@ -5,6 +5,5 @@
 * Nextcloud log to stdout/stderr
 * Mail sending
 * Export OpenShift definitions as template
-* Cron job
 * liveness/readiness probes
 * Usage Documentation
