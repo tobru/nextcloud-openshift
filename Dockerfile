@@ -13,4 +13,5 @@ RUN chgrp -R 0 /var/www/html \
                    /usr/src/nextcloud/themes
 
 # Install and enable PHP OPCache
-RUN docker-php-ext-install opcache
+RUN docker-php-ext-install opcache && \
+    docker-php-ext-enable opcache
