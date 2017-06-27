@@ -7,7 +7,6 @@
 * liveness/readiness probes
 * Usage Documentation
 * Backup: DB, Files
-* DB config with Env vars: https://github.com/nextcloud/docker/commit/72ef7897e66f6657e81679386ab60a98ef6509f1
 * OC Template
 
 ## File Permissions
