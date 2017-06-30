@@ -61,6 +61,13 @@ to backup data to.
 * Nextcloud Cronjob is called from a `CronJob` object every 15 minutes
 * The Dockerfile just add the `nginx.conf` to the Alpine Nginx container
 
+To use the `occ` CLI, you can use `oc exec`:
+
+```
+oc get pods
+oc exec NEXTCLOUDPOD -c nextcloud -ti php occ
+```
+
 ## Ideas
 
 * Use sclorg Nginx instead of Alpine Nginx for better OpenShift compatibility
