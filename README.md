@@ -1,18 +1,41 @@
 # Todo for OpenShift readyness
 
-* Export OpenShift definitions as template
 * Usage Documentation
 * Backup: DB, Files
 
 # Installation
 
-## Database
+## 1 Deploy Database
 
 ```
 oc -n openshift process mariadb-persistent -p MYSQL_DATABASE=nextcloud | oc -n MYNAMESPACE create -f -
 ```
 
-## File Permissions
+## 2 Deploy Nextcloud
 
-When using volumes for the directories which data is written to, no changes to the
-original image is needed.
+```
+oc process -f https://raw.githubusercontent.com/tobru/nextcloud-openshift/master/nextcloud.yaml -p NEXTCLOUD_HOST=nextcloud.example.com | oc -n MYNAMESPACE create -f -
+```
+
+### Template parameters
+
+Just execute the following command to get the available parameters:
+
+```
+oc process -f https://raw.githubusercontent.com/tobru/nextcloud-openshift/master/nextcloud.yaml --parameters
+```
+
+## 3 Configure Nextcloud
+
+* Navigate to http://nextcloud.example.com
+* to be continued
+
+**Hints**
+
+# Backup
+
+Still to be done
+
+# Notes
+
+* Nextcloud Cronjob is called from OpenShift `CronJob` object every 15 minutes

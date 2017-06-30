@@ -1,7 +1,8 @@
-FROM nextcloud:12-fpm
+FROM nginx:alpine
 
-# Correct file permissions for Nextcloud
-RUN chown -R www-data:root /usr/src/nextcloud/custom_apps/ \
- && chown -R www-data:root /usr/src/nextcloud/config/ \
- && chown -R www-data:root /usr/src/nextcloud/data/ \
- && chown -R www-data:root /usr/src/nextcloud/themes/
+VOLUME /var/www/html
+COPY nginx.conf /etc/nginx/nginx.conf
+RUN chown -R 1001:0 /var/cache/nginx && \
+    chmod -R a+rwx /var/cache/nginx && \
+    chmod -R ug+rwx /var/cache/nginx
+

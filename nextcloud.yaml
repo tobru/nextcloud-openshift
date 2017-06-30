@@ -11,54 +11,54 @@ metadata:
     template.openshift.io/support-url: "https://github.com/tobru/nextcloud-openshift/issues"
 parameters:
 - name: NEXTCLOUD_HOST
-  description: URL to Nextcloud (Route - host)
+  description: Application URL of Nextcloud (Route/host)
   required: true
 - name: NEXTCLOUD_IMAGE_TAG
-  description: Tag of the Docker Image to deploy
+  description: Tag of the Nextcloud Docker Image to deploy
   value: 12-fpm
 - name: NGINX_DOCKERFILE_REPO
-  description: Nginx Docker file source repository
+  description: Nginx Dockerfile source repository
   value: https://github.com/tobru/nextcloud-openshift.git
 - name: PVC_SIZE_APPS
-  description: Size of PVC for apps
+  description: PVC size for apps
   value: 5Gi
 - name: PVC_SIZE_CONFIG
-  description: Size of PVC for config files
+  description: PVC size for config files
   value: 1Gi
 - name: PVC_SIZE_DATA
-  description: Size of PVC for data
+  description: PVC size for data
   value: 5Gi
 objects:
 - apiVersion: v1
-  kind: BuildConfig
+  kind: PersistentVolumeClaim
   metadata:
-    creationTimestamp: null
-    labels:
-      build: nginx
-      app: nextcloud
-    name: nginx
+    name: nextcloud-apps
   spec:
-    nodeSelector: null
-    output:
-      to:
-        kind: ImageStreamTag
-        name: nginx:latest
-    postCommit: {}
-    resources: {}
-    runPolicy: Serial
-    source:
-      git:
-        uri: ${NGINX_DOCKERFILE_REPO}
-      type: Git
-    strategy:
-      dockerStrategy:
-        dockerfilePath: Dockerfile.nginx
-        from:
-          kind: DockerImage
-          name: nginx:alpine
-      type: Docker
-    triggers:
-    - type: ConfigChange
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${PVC_SIZE_APPS}
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: nextcloud-config
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${PVC_SIZE_CONFIG}
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: nextcloud-data
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${PVC_SIZE_DATA}
 - apiVersion: v1
   kind: ImageStream
   metadata:
@@ -95,6 +95,35 @@ objects:
       name: latest
       referencePolicy:
         type: ""
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    creationTimestamp: null
+    labels:
+      build: nginx
+      app: nextcloud
+    name: nginx
+  spec:
+    nodeSelector: null
+    output:
+      to:
+        kind: ImageStreamTag
+        name: nginx:latest
+    postCommit: {}
+    resources: {}
+    runPolicy: Serial
+    source:
+      git:
+        uri: ${NGINX_DOCKERFILE_REPO}
+      type: Git
+    strategy:
+      dockerStrategy:
+        from:
+          kind: DockerImage
+          name: nginx:alpine
+      type: Docker
+    triggers:
+    - type: ConfigChange
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
@@ -240,19 +269,6 @@ objects:
       type: ImageChange
     - type: ConfigChange
 - apiVersion: v1
-  kind: Route
-  metadata:
-    name: nextcloud
-  spec:
-    host: ${NEXTCLOUD_HOST}
-    port:
-      targetPort: 8080-tcp
-    to:
-      kind: Service
-      name: nextcloud
-      weight: 100
-    wildcardPolicy: None
-- apiVersion: v1
   kind: Service
   metadata:
     labels:
@@ -270,35 +286,18 @@ objects:
     sessionAffinity: None
     type: ClusterIP
 - apiVersion: v1
-  kind: PersistentVolumeClaim
+  kind: Route
   metadata:
-    name: nextcloud-apps
+    name: nextcloud
   spec:
-    accessModes:
-    - ReadWriteOnce
-    resources:
-      requests:
-        storage: ${PVC_SIZE_APPS}
-- apiVersion: v1
-  kind: PersistentVolumeClaim
-  metadata:
-    name: nextcloud-config
-  spec:
-    accessModes:
-    - ReadWriteOnce
-    resources:
-      requests:
-        storage: ${PVC_SIZE_CONFIG}
-- apiVersion: v1
-  kind: PersistentVolumeClaim
-  metadata:
-    name: nextcloud-data
-  spec:
-    accessModes:
-    - ReadWriteOnce
-    resources:
-      requests:
-        storage: ${PVC_SIZE_DATA}
+    host: ${NEXTCLOUD_HOST}
+    port:
+      targetPort: 8080-tcp
+    to:
+      kind: Service
+      name: nextcloud
+      weight: 100
+    wildcardPolicy: None
 - apiVersion: batch/v2alpha1
   kind: CronJob
   metadata:
