@@ -10,9 +10,6 @@ metadata:
     template.openshift.io/documentation-url: "https://github.com/tobru/nextcloud-openshift/blob/master/README.md"
     template.openshift.io/support-url: "https://github.com/tobru/nextcloud-openshift/issues"
 parameters:
-- name: NAMESPACE
-  description: Namespace which Nextcloud run in
-  required: true
 - name: NEXTCLOUD_HOST
   description: URL to Nextcloud (Route - host)
   required: true
@@ -174,7 +171,7 @@ objects:
             name: nextcloud-config
           - mountPath: /var/www/html/custom_apps
             name: nextcloud-apps
-        - image: 172.30.1.1:5000/${NAMESPACE}/nginx:latest
+        - image: nginx
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3
@@ -231,8 +228,7 @@ objects:
         - nextcloud
         from:
           kind: ImageStreamTag
-          name: nextcloud:12-fpm
-          namespace: ${NAMESPACE}
+          name: nextcloud:${NEXTCLOUD_IMAGE_TAG}
       type: ImageChange
     - imageChangeParams:
         automatic: true
@@ -241,7 +237,6 @@ objects:
         from:
           kind: ImageStreamTag
           name: nginx:latest
-          namespace: ${NAMESPACE}
       type: ImageChange
     - type: ConfigChange
 - apiVersion: v1
