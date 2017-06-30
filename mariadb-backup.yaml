@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: mariadb-backup
+  annotations:
+    description: "Template for MongoDB container backup job"
+    tags: "database,mariadb,backup"
+parameters:
+- name: BACKUP_SCHEDULE
+  description: "Cron-like schedule expression. Default: Every hour at :39'"
+  value: "39 * * * *"
+- name: BACKUP_KEEP
+  description: "Number of backups to keep"
+  value: "5"
+objects:
+- apiVersion: batch/v2alpha1
+  kind: CronJob
+  metadata:
+    name: mariadb-backup
+  spec:
+    schedule: ${BACKUP_SCHEDULE}
+    concurrencyPolicy: Forbid
+    jobTemplate:
+      spec:
+        template:
+          spec:
+            volumes:
+              - name: mariadb-data
+                persistentVolumeClaim:
+                  claimName: mariadb
+            containers:
+              - name: mariadb-backup
+                image: centos/mariadb-101-centos7
+                command:
+                  - bash
+                  - -c
+                  - DATE=$(date +%Y%m%d-%H-%M-%S); ls -rdt1 /var/lib/mysql/data/dump-* |
+                    head -n -$BACKUP_KEEP | xargs rm; mysqldump --single-transaction -u$MYSQL_USER
+                    -p$MYSQL_PASSWORD -hmariadb nextcloud > /var/lib/mysql/data/dump-$DATE.sql;
+                    echo "Backup complete"; echo; echo "To restore, use:"; echo "~# mysql
+                    -u\$MYSQL_USER -p\$MYSQL_PASSWORD -hmariadb nextcloud < $DATE.sql";
+                    sleep 60
+                env:
+                - name: BACKUP_KEEP
+                  value: ${BACKUP_KEEP}
+                - name: MYSQL_USER
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-user
+                      name: mariadb
+                - name: MYSQL_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      key: database-password
+                      name: mariadb
+                - name: MYSQL_DATABASE
+                  value: nextcloud
+                volumeMounts:
+                  - name: mariadb-data
+                    mountPath: /var/lib/mysql/data
+            restartPolicy: Never
