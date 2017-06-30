@@ -302,3 +302,65 @@ objects:
     resources:
       requests:
         storage: ${PVC_SIZE_DATA}
+- apiVersion: batch/v2alpha1
+  kind: CronJob
+  metadata:
+    name: nextcloud-cron
+  spec:
+    concurrencyPolicy: Replace
+    jobTemplate:
+      spec:
+        activeDeadlineSeconds: 3600
+        template:
+          spec:
+            containers:
+            - args:
+              - php
+              - -f
+              - /var/www/html/cron.php
+              env:
+              - name: NC_dbhost
+                value: mariadb
+              - name: NC_dbuser
+                valueFrom:
+                  secretKeyRef:
+                    key: database-user
+                    name: mariadb
+              - name: NC_dbpassword
+                valueFrom:
+                  secretKeyRef:
+                    key: database-password
+                    name: mariadb
+              - name: NC_dbname
+              image: nextcloud
+              imagePullPolicy: Always
+              name: nextcloud-cron
+              resources: {}
+              terminationMessagePath: /dev/termination-log
+              volumeMounts:
+              - mountPath: /var/www/html
+                name: nextcloud-source
+              - mountPath: /var/www/html/data
+                name: nextcloud-data
+              - mountPath: /var/www/html/config
+                name: nextcloud-config
+              - mountPath: /var/www/html/custom_apps
+                name: nextcloud-apps
+            dnsPolicy: ClusterFirst
+            restartPolicy: Never
+            securityContext: {}
+            terminationGracePeriodSeconds: 30
+            volumes:
+            - emptyDir: {}
+              name: nextcloud-source
+            - name: nextcloud-data
+              persistentVolumeClaim:
+                claimName: nextcloud-data
+            - name: nextcloud-config
+              persistentVolumeClaim:
+                claimName: nextcloud-config
+            - name: nextcloud-apps
+              persistentVolumeClaim:
+                claimName: nextcloud-apps
+    schedule: '*/15 * * * *'
+    suspend: false
