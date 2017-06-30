@@ -1,5 +1,8 @@
 # Nextcloud for OpenShift 3
 
+This repository contains an OpenShift 3 template to easily deploy Nextcloud on OpenShift.
+With this template it's possible to run your own Nextcloud instance f.e. on [APPUiO](https://appuio.ch/).
+
 ## Installation
 
 ### 1 Deploy Database
@@ -16,7 +19,7 @@ oc process -f https://raw.githubusercontent.com/tobru/nextcloud-openshift/master
 
 #### Template parameters
 
-Just execute the following command to get the available parameters:
+Execute the following command to get the available parameters:
 
 ```
 oc process -f https://raw.githubusercontent.com/tobru/nextcloud-openshift/master/nextcloud.yaml --parameters
@@ -43,6 +46,7 @@ Still to be done:
 ## Notes
 
 * Nextcloud Cronjob is called from a `CronJob` object every 15 minutes
+* The Dockerfile just add the `nginx.conf` to the Alpine Nginx container
 
 ## Ideas
 
