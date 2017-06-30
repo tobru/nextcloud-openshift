@@ -1,0 +1,304 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: nextcloud
+  annotations:
+    description: "Nextcloud - A safe home for all your data"
+    tags: "fileshare,nextcloud"
+    iconClass: fa-cloud-upload
+    template.openshift.io/provider-display-name: "tobrunet"
+    template.openshift.io/documentation-url: "https://github.com/tobru/nextcloud-openshift/blob/master/README.md"
+    template.openshift.io/support-url: "https://github.com/tobru/nextcloud-openshift/issues"
+parameters:
+- name: NAMESPACE
+  description: Namespace which Nextcloud run in
+  required: true
+- name: NEXTCLOUD_HOST
+  description: URL to Nextcloud (Route - host)
+  required: true
+- name: NEXTCLOUD_IMAGE_TAG
+  description: Tag of the Docker Image to deploy
+  value: 12-fpm
+- name: NGINX_DOCKERFILE_REPO
+  description: Nginx Docker file source repository
+  value: https://github.com/tobru/nextcloud-openshift.git
+- name: PVC_SIZE_APPS
+  description: Size of PVC for apps
+  value: 5Gi
+- name: PVC_SIZE_CONFIG
+  description: Size of PVC for config files
+  value: 1Gi
+- name: PVC_SIZE_DATA
+  description: Size of PVC for data
+  value: 5Gi
+objects:
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    creationTimestamp: null
+    labels:
+      build: nginx
+    name: nginx
+  spec:
+    nodeSelector: null
+    output:
+      to:
+        kind: ImageStreamTag
+        name: nginx:latest
+    postCommit: {}
+    resources: {}
+    runPolicy: Serial
+    source:
+      git:
+        uri: ${NGINX_DOCKERFILE_REPO}
+      type: Git
+    strategy:
+      dockerStrategy:
+        dockerfilePath: Dockerfile.nginx
+        from:
+          kind: DockerImage
+          name: nginx:alpine
+      type: Docker
+    triggers:
+    - type: ConfigChange
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      app: nextcloud
+    name: nextcloud
+  spec:
+    tags:
+    - annotations:
+        openshift.io/imported-from: nextcloud:${NEXTCLOUD_IMAGE_TAG}
+      from:
+        kind: DockerImage
+        name: nextcloud:${NEXTCLOUD_IMAGE_TAG}
+      importPolicy:
+        scheduled: true
+      name: ${NEXTCLOUD_IMAGE_TAG}
+      referencePolicy:
+        type: Source
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      build: nginx
+    name: nginx
+  spec:
+    tags:
+    - annotations: null
+      from:
+        kind: DockerImage
+        name: nginx:latest
+      generation: null
+      importPolicy: {}
+      name: latest
+      referencePolicy:
+        type: ""
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      app: nextcloud
+    name: nextcloud
+  spec:
+    replicas: 1
+    selector:
+      app: nextcloud
+      deploymentconfig: nextcloud
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          app: nextcloud
+          deploymentconfig: nextcloud
+      spec:
+        containers:
+        - env:
+          - name: NC_dbhost
+            value: mariadb
+          - name: NC_dbuser
+            valueFrom:
+              secretKeyRef:
+                key: database-user
+                name: mariadb
+          - name: NC_dbpassword
+            valueFrom:
+              secretKeyRef:
+                key: database-password
+                name: mariadb
+          - name: NC_dbname
+            value: nextcloud
+          image: nextcloud
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 9000
+            timeoutSeconds: 5
+          name: nextcloud
+          ports:
+          - containerPort: 9000
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 9000
+            timeoutSeconds: 5
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /var/www/html
+            name: nextcloud-source
+          - mountPath: /var/www/html/data
+            name: nextcloud-data
+          - mountPath: /var/www/html/config
+            name: nextcloud-config
+          - mountPath: /var/www/html/custom_apps
+            name: nextcloud-apps
+        - image: 172.30.1.1:5000/${NAMESPACE}/nginx:latest
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 8080
+            timeoutSeconds: 1
+          name: nginx
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 8080
+            timeoutSeconds: 1
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /var/www/html
+            name: nextcloud-source
+          - mountPath: /var/www/html/data
+            name: nextcloud-data
+          - mountPath: /var/www/html/config
+            name: nextcloud-config
+          - mountPath: /var/www/html/custom_apps
+            name: nextcloud-apps
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: nextcloud-source
+        - name: nextcloud-data
+          persistentVolumeClaim:
+            claimName: nextcloud-data
+        - name: nextcloud-config
+          persistentVolumeClaim:
+            claimName: nextcloud-config
+        - name: nextcloud-apps
+          persistentVolumeClaim:
+            claimName: nextcloud-apps
+    test: false
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - nextcloud
+        from:
+          kind: ImageStreamTag
+          name: nextcloud:12-fpm
+          namespace: ${NAMESPACE}
+      type: ImageChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - nginx
+        from:
+          kind: ImageStreamTag
+          name: nginx:latest
+          namespace: ${NAMESPACE}
+      type: ImageChange
+    - type: ConfigChange
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: nextcloud
+  spec:
+    host: ${NEXTCLOUD_HOST}
+    port:
+      targetPort: 8080-tcp
+    to:
+      kind: Service
+      name: nextcloud
+      weight: 100
+    wildcardPolicy: None
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: nextcloud
+    name: nextcloud
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      app: nextcloud
+      deploymentconfig: nextcloud
+    sessionAffinity: None
+    type: ClusterIP
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: nextcloud-apps
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${PVC_SIZE_APPS}
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: nextcloud-config
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${PVC_SIZE_CONFIG}
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: nextcloud-data
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${PVC_SIZE_DATA}
