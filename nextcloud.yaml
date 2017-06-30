@@ -38,6 +38,7 @@ objects:
     creationTimestamp: null
     labels:
       build: nginx
+      app: nextcloud
     name: nginx
   spec:
     nodeSelector: null
@@ -84,6 +85,7 @@ objects:
   metadata:
     labels:
       build: nginx
+      app: nextcloud
     name: nginx
   spec:
     tags:
