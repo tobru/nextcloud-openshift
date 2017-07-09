@@ -328,7 +328,8 @@ objects:
                     key: database-password
                     name: mariadb
               - name: NC_dbname
-              image: nextcloud
+                value: nextcloud
+              image: nextcloud:${NEXTCLOUD_IMAGE_TAG}
               imagePullPolicy: Always
               name: nextcloud-cron
               resources: {}
