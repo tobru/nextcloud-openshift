@@ -5,16 +5,25 @@ With this template it's possible to run your own Nextcloud instance f.e. on [APP
 
 ## Installation
 
+### 0 Create OpenShift project
+
+Create an OpenShift project if not already provided by the service
+
+```
+PROJECT=nextcloud
+oc new-project $PROJECT
+```
+
 ### 1 Deploy Database
 
 ```
-oc -n openshift process mariadb-persistent -p MYSQL_DATABASE=nextcloud | oc -n MYNAMESPACE create -f -
+oc -n openshift process mariadb-persistent -p MYSQL_DATABASE=nextcloud | oc -n $PROJECT create -f -
 ```
 
 ### 2 Deploy Nextcloud
 
 ```
-oc process -f https://raw.githubusercontent.com/tobru/nextcloud-openshift/master/nextcloud.yaml -p NEXTCLOUD_HOST=nextcloud.example.com | oc -n MYNAMESPACE create -f -
+oc process -f https://raw.githubusercontent.com/tobru/nextcloud-openshift/master/nextcloud.yaml -p NEXTCLOUD_HOST=nextcloud.example.com | oc -n $PROJECT create -f -
 ```
 
 #### Template parameters
