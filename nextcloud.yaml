@@ -13,9 +13,12 @@ parameters:
 - name: NEXTCLOUD_HOST
   description: Application URL of Nextcloud (Route/host)
   required: true
+- name: NEXTCLOUD_IMAGE
+  description: Image to deploy
+  value: tobru/nextcloud-openshift
 - name: NEXTCLOUD_IMAGE_TAG
   description: Tag of the Nextcloud Docker Image to deploy
-  value: 12-fpm
+  value: latest
 - name: NGINX_DOCKERFILE_REPO
   description: Nginx Dockerfile source repository
   value: https://github.com/tobru/nextcloud-openshift.git
@@ -68,10 +71,10 @@ objects:
   spec:
     tags:
     - annotations:
-        openshift.io/imported-from: nextcloud:${NEXTCLOUD_IMAGE_TAG}
+        openshift.io/imported-from: ${NEXTCLOUD_IMAGE}:${NEXTCLOUD_IMAGE_TAG}
       from:
         kind: DockerImage
-        name: nextcloud:${NEXTCLOUD_IMAGE_TAG}
+        name: ${NEXTCLOUD_IMAGE}:${NEXTCLOUD_IMAGE_TAG}
       importPolicy:
         scheduled: true
       name: ${NEXTCLOUD_IMAGE_TAG}
