@@ -15,10 +15,10 @@ parameters:
   required: true
 - name: NEXTCLOUD_IMAGE
   description: Image to deploy
-  value: tobru/nextcloud-openshift
+  value: docker.io/nextcloud
 - name: NEXTCLOUD_IMAGE_TAG
   description: Tag of the Nextcloud Docker Image to deploy
-  value: latest
+  value: 12-fpm
 - name: NGINX_DOCKERFILE_REPO
   description: Nginx Dockerfile source repository
   value: https://github.com/tobru/nextcloud-openshift.git
