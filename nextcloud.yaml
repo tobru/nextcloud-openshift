@@ -22,46 +22,20 @@ parameters:
 - name: NGINX_DOCKERFILE_REPO
   description: Nginx Dockerfile source repository
   value: https://github.com/tobru/nextcloud-openshift.git
-- name: PVC_SIZE_APPS
-  description: PVC size for apps
-  value: 5Gi
-- name: PVC_SIZE_CONFIG
-  description: PVC size for config files
-  value: 1Gi
-- name: PVC_SIZE_DATA
-  description: PVC size for data
+- name: PVC_SIZE
+  description: PVC size for Apps, Config and Data
   value: 5Gi
 objects:
-- apiVersion: v1
-  kind: PersistentVolumeClaim
-  metadata:
-    name: nextcloud-apps
-  spec:
-    accessModes:
-    - ReadWriteOnce
-    resources:
-      requests:
-        storage: ${PVC_SIZE_APPS}
-- apiVersion: v1
-  kind: PersistentVolumeClaim
-  metadata:
-    name: nextcloud-config
-  spec:
-    accessModes:
-    - ReadWriteOnce
-    resources:
-      requests:
-        storage: ${PVC_SIZE_CONFIG}
 - apiVersion: v1
   kind: PersistentVolumeClaim
   metadata:
     name: nextcloud-data
   spec:
     accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
     resources:
       requests:
-        storage: ${PVC_SIZE_DATA}
+        storage: ${PVC_SIZE}
 - apiVersion: v1
   kind: ImageStream
   metadata:
@@ -199,10 +173,13 @@ objects:
             name: nextcloud-source
           - mountPath: /var/www/html/data
             name: nextcloud-data
+            subPath: data
           - mountPath: /var/www/html/config
-            name: nextcloud-config
+            name: nextcloud-data
+            subPath: config
           - mountPath: /var/www/html/custom_apps
-            name: nextcloud-apps
+            name: nextcloud-data
+            subPath: apps
         - image: nginx
           imagePullPolicy: Always
           livenessProbe:
@@ -232,10 +209,13 @@ objects:
             name: nextcloud-source
           - mountPath: /var/www/html/data
             name: nextcloud-data
+            subPath: data
           - mountPath: /var/www/html/config
-            name: nextcloud-config
+            name: nextcloud-data
+            subPath: config
           - mountPath: /var/www/html/custom_apps
-            name: nextcloud-apps
+            name: nextcloud-data
+            subPath: apps
         dnsPolicy: ClusterFirst
         restartPolicy: Always
         securityContext: {}
@@ -246,12 +226,6 @@ objects:
         - name: nextcloud-data
           persistentVolumeClaim:
             claimName: nextcloud-data
-        - name: nextcloud-config
-          persistentVolumeClaim:
-            claimName: nextcloud-config
-        - name: nextcloud-apps
-          persistentVolumeClaim:
-            claimName: nextcloud-apps
     test: false
     triggers:
     - imageChangeParams:
@@ -342,10 +316,13 @@ objects:
                 name: nextcloud-source
               - mountPath: /var/www/html/data
                 name: nextcloud-data
+                subPath: data
               - mountPath: /var/www/html/config
-                name: nextcloud-config
+                name: nextcloud-data
+                subPath: config
               - mountPath: /var/www/html/custom_apps
-                name: nextcloud-apps
+                name: nextcloud-data
+                subPath: apps
             dnsPolicy: ClusterFirst
             restartPolicy: Never
             securityContext: {}
@@ -356,11 +333,5 @@ objects:
             - name: nextcloud-data
               persistentVolumeClaim:
                 claimName: nextcloud-data
-            - name: nextcloud-config
-              persistentVolumeClaim:
-                claimName: nextcloud-config
-            - name: nextcloud-apps
-              persistentVolumeClaim:
-                claimName: nextcloud-apps
     schedule: '*/15 * * * *'
     suspend: false
