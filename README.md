@@ -40,7 +40,6 @@ oc process -f https://raw.githubusercontent.com/tobru/nextcloud-openshift/master
 * Fill in the form and finish the installation. The DB credentials can be 
   found in the secret `mariadb`. In the Webconsole it can be found under
   `Resources -> Secrets -> mariadb -> Reveal Secret`
-* Enable APCu in `config.php`. See also https://github.com/nextcloud/docker/issues/109
 
 **Hints**
 
