@@ -292,6 +292,8 @@ objects:
               - -f
               - /var/www/html/cron.php
               env:
+              - name: NEXTCLOUD_UPDATE
+                value: "1"
               - name: NC_dbhost
                 value: mariadb
               - name: NC_dbuser
